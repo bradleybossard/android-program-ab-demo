@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">AndroidProgramAbDemo</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="hello_world">Please wait while the bot is loaded.</string>
     <string name="action_settings">Settings</string>
 
 </resources>

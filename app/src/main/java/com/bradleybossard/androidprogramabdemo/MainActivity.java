@@ -1,65 +1,67 @@
 package com.bradleybossard.androidprogramabdemo;
 
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.widget.TextView;
 
-//import android.R.string;
-//import android.provider.Settings.System;
-//import android.util.Log;
+import org.alicebot.ab.Bot;
+import org.alicebot.ab.Chat;
 
-
-/*
-Hello.  I was curious, has there been any progress on this, i.e. getting Program AB to run on Android.
-
-I was kind of looking over this thread and another related one here
-
-https://www.chatbots.org/ai_zone/viewthread/1778/
-
-I have created a new Android Studio project and copied over the AB.jar library from the Project AB, but I realize now when diving a little deeper, that when you pass a path to Bot constructor, like so
-
-String path = "/bots";
-Bot bot = new Bot(botname, path);
-
-
-http://stackoverflow.com/questions/26546204/aiml-file-does-not-exist-why-my-android-project-cannot-connect-to-aiml-files-in/26973015#26973015
-*/
-
+import java.io.File;
 
 public class MainActivity extends Activity {
-
+    
+    private static final String TAG = "MainActivity";
+    
     String botname = "alice2";
-
-    // TODO(bossard) : Ok, so when you create a bot, it needs a file structure like this
-    //
-    //  Directory	Contents
-/*
-    c:/example/bots/mybot/aiml	AIML Files
-    c:/example/bots/mybot/aimlif	AIMLIF format files
-    c:/example/bots/mybot/config	Bot configuration Files
-    c:/example/bots/mybot/sets	AIML Sets
-    c:/example/bots/mybot/maps	AIML Maps
-*/
-  //
-    // TODO(bbossard) : Possible solution to overcoming the file problem path, only sync .zip file, then unzip it locally and use the files.
-    //http://stackoverflow.com/questions/26546204/aiml-file-does-not-exist-why-my-android-project-cannot-connect-to-aiml-files-in/26973015#26973015
-
-    String path = "D:/university courses/A.terms/Final project/program-ab-0.0.6.26/bots";
-    Bot bot = new Bot(botname, path);
-
-    Chat chatSession = new Chat(bot);
-    String request = "Hello. Are you alive? What is your name?";
-    String response = chatSession.multisentenceRespond(request);
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        TextView t = new TextView(this);
-        t = (TextView) findViewById(R.id.title_text);
-        t.setText(response);
+
+        File fileExt = new File(getExternalFilesDir(null).getAbsolutePath() + "/bots");
+        if (!fileExt.exists()) {
+            ZipFileExtraction extract = new ZipFileExtraction();
+
+            try {
+                extract.unZipIt(getAssets().open("bots.zip"), getExternalFilesDir(null).getAbsolutePath() + "/");
+            } catch (Exception e) {
+                e.printStackTrace();
+                return;
+            }
+        }
+
+        new AsyncTask<Void, Void, String>() {
+            @Override
+            protected String doInBackground(Void... params) {
+                final String path = getExternalFilesDir(null).getAbsolutePath();
+
+                Bot bot = new Bot(botname, path);
+                Chat chatSession = new Chat(bot);
+                String request = "Hello. Are you alive? What is your name?";
+                //String request = "What is your name?";
+                String response = chatSession.multisentenceRespond(request);
+
+                Log.v(TAG, "response = " + response);
+                return response;
+            }
+
+            @Override
+            protected void onPostExecute(String response) {
+                if (response.isEmpty()) {
+                    response = "There is no response";
+                }
+                ((TextView) findViewById(R.id.title_text))
+                        .setText(response);
+
+            }
+        }.execute();
+        
+        
     }
 
     @Override
